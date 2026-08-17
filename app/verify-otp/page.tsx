@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import OtpInput from "@/components/Auth/OtpInput";
+import OtpInput from "@/app/verify-otp/components/OtpInput";
 
 const OTP_LENGTH = 5;
 const RESEND_SECONDS = 59;

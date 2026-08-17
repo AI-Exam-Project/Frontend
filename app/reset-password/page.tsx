@@ -5,7 +5,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import PasswordInput from "@/components/Auth/PasswordInput";
+import PasswordInput from "@/app/reset-password/components/PasswordInput";
 
 export default function ResetPassword() {
   const router = useRouter();

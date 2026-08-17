@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import FormInput from "../../components/Auth/FormInput";
+import FormInput from "./components/FormInput";
 
 export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);

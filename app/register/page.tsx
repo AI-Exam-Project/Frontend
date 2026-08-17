@@ -3,8 +3,8 @@ import { useState } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import FormInput from "../../components/Auth/FormInput";
-import PasswordInput from "../../components/Auth/PasswordInput";
+import FormInput from "../forgot-password/components/FormInput";
+import PasswordInput from "../reset-password/components/PasswordInput";
 
 export default function Register() {
   const router = useRouter();
