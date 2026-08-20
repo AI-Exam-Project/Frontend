@@ -1,29 +1,30 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import OtpInput from "@/app/verify-otp/components/OtpInput";
 
 const OTP_LENGTH = 5;
 const RESEND_SECONDS = 59;
 
-export default function VerifyOtp() {
+function VerifyOtpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") || "";
 
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const [resending, setResending] = useState(false);
+  const [error, setError] = useState<string>(() =>
+    email ? "" : "انتهت الجلسة، الرجاء إعادة التسجيل"
+  );
 
-  // المؤقت التنازلي
   useEffect(() => {
     if (secondsLeft <= 0) return;
-    const timer = setInterval(() => {
-      setSecondsLeft((prev) => prev - 1);
-    }, 1000);
+    const timer = setInterval(() => setSecondsLeft((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [secondsLeft]);
 
@@ -38,23 +39,25 @@ export default function VerifyOtp() {
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
-
     const code = otp.join("");
     if (code.length !== OTP_LENGTH) {
       setError("الرجاء إدخال الرمز كاملاً");
       return;
     }
+    if (!email) {
+      setError("انتهت الجلسة، الرجاء إعادة التسجيل");
+      return;
+    }
 
     setLoading(true);
     setError("");
-
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/verify-email`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ email, code }),
         }
       );
 
@@ -62,12 +65,10 @@ export default function VerifyOtp() {
         router.push("/login");
         return;
       }
-
-      if (res.status === 400) {
-        setError("الرمز غير صحيح، حاول مرة أخرى");
-      } else {
-        setError("حدث خطأ، حاول مرة أخرى");
-      }
+      if (res.status === 400) setError("البيانات المدخلة غير صحيحة");
+      else if (res.status === 401) setError("الرمز غير صحيح أو منتهي الصلاحية، حاول مرة أخرى");
+      else if (res.status === 429) setError("عدد المحاولات كبير، حاول بعد قليل");
+      else setError("حدث خطأ، حاول مرة أخرى");
     } catch (err) {
       console.error(err);
       setError("تعذر الاتصال بالسيرفر، تحقق من الإنترنت");
@@ -77,17 +78,18 @@ export default function VerifyOtp() {
   }
 
   const handleResend = useCallback(async () => {
-    if (secondsLeft > 0 || resending) return;
-
+    if (secondsLeft > 0 || resending || !email) return;
     setResending(true);
     setError("");
-
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/resend-verification`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
       );
-
       if (res.ok) {
         setSecondsLeft(RESEND_SECONDS);
         setOtp(Array(OTP_LENGTH).fill(""));
@@ -102,25 +104,22 @@ export default function VerifyOtp() {
     } finally {
       setResending(false);
     }
-  }, [secondsLeft, resending]);
+  }, [secondsLeft, resending, email]);
 
   return (
     <main
       className="min-h-screen w-full flex items-center justify-center p-4 relative"
-      style={{
-              background: "linear-gradient(to top, #90CDE1 0%, #C4E5EF 50%, #FFFFFF 100%)"
-            }}
+      style={{ background: "linear-gradient(to top, #90CDE1 0%, #C4E5EF 50%, #FFFFFF 100%)" }}
     >
-      <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-3xl p-8 w-full max-w-xl relative"
-      style={{
-          background: "linear-gradient(to top, rgba(200, 235, 245, 0.75) 0%, rgba(235, 247, 252, 0.85) 50%, rgba(255, 255, 255, 0.95) 100%)"
+      <div
+        className="bg-white/90 backdrop-blur-md shadow-2xl rounded-3xl p-8 w-full max-w-xl relative"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(200, 235, 245, 0.75) 0%, rgba(235, 247, 252, 0.85) 50%, rgba(255, 255, 255, 0.95) 100%)",
         }}
       >
         <div className="absolute top-6 right-6">
-          <Link
-            href="/register"
-            className="flex items-center text-slate-700 transition-colors hover:text-[#002C5A]"
-          >
+          <Link href="/register" className="flex items-center text-slate-700 transition-colors hover:text-[#002C5A]">
             <ArrowRight size={22} />
           </Link>
         </div>
@@ -137,7 +136,7 @@ export default function VerifyOtp() {
             length={OTP_LENGTH}
             value={otp}
             onChange={handleOtpChange}
-            disabled={loading}
+            disabled={loading || !email}
             hasError={!!error}
           />
 
@@ -148,24 +147,18 @@ export default function VerifyOtp() {
           <button
             type="button"
             onClick={handleResend}
-            disabled={secondsLeft > 0 || resending}
+            disabled={secondsLeft > 0 || resending || !email}
             className="text-sm text-slate-500 disabled:cursor-not-allowed"
           >
             لم يصلك أي رمز؟{" "}
-            <span
-              className={
-                secondsLeft > 0
-                  ? "text-slate-300"
-                  : "font-semibold text-[#10B981] hover:underline"
-              }
-            >
+            <span className={secondsLeft > 0 ? "text-slate-300" : "font-semibold text-[#10B981] hover:underline"}>
               {resending ? "جاري الإرسال..." : "أعد إرسال الرمز"}
             </span>
           </button>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !email}
             className="flex w-full items-center justify-center rounded-full bg-[#002C5A] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#2f4c6a] active:scale-[0.99] disabled:opacity-70"
           >
             {loading ? (
@@ -180,5 +173,13 @@ export default function VerifyOtp() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function VerifyOtp() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>}>
+      <VerifyOtpForm />
+    </Suspense>
   );
 }

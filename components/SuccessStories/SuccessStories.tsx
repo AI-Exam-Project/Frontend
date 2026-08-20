@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import TestimonialCard from "./TestimonialCardProps";
+import { useSuccessStoriesReveal } from "./hooks/useSuccessStoriesReveal";
 
 const testimonials = [
   {
@@ -35,15 +38,17 @@ const testimonials = [
 ];
 
 export default function SuccessStories() {
+  const { sectionRef } = useSuccessStoriesReveal();
+
   return (
-    <section id="success-stories" className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-12">
+    <section id="success-stories" ref={sectionRef} className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-12">
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 lg:items-start lg:gap-12">
 
           {/* section Image  */}
           <div className="relative mt-16 lg:col-span-5 lg:mt-0 lg:sticky lg:top-24">
             <div className="relative h-[550px] w-full">
-              <div className="absolute top-16 left-4 h-[420px] w-[300px] overflow-hidden rounded-[2.5rem] sm:w-[340px]">
+              <div className="stories-img-left absolute top-16 left-4 h-[420px] w-[300px] overflow-hidden rounded-[2.5rem] sm:w-[340px]">
                 <Image
                   src="/Rectangle 222.png"
                   alt="طالبة تدرس"
@@ -52,7 +57,7 @@ export default function SuccessStories() {
                 />
               </div>
               
-              <div className="absolute top-0 right-4 h-[380px] w-[280px] overflow-hidden rounded-[2.5rem] sm:w-[320px]">
+              <div className="stories-img-right absolute top-0 right-4 h-[380px] w-[280px] overflow-hidden rounded-[2.5rem] sm:w-[320px]">
                 <Image
                   src="/Rectangle 61.png"
                   alt="طالب يدرس"
@@ -65,7 +70,7 @@ export default function SuccessStories() {
 
           {/* section Card */}
           <div className="lg:col-span-7 flex flex-col">
-            <h2 className="mb-12 text-3xl font-extrabold text-[#002C5A] sm:text-4xl">
+            <h2 className="stories-title mb-12 text-3xl font-extrabold text-[#002C5A] sm:text-4xl">
               قصص نجاح طلابنا في منصة مسار التميز
             </h2>
             
@@ -73,7 +78,7 @@ export default function SuccessStories() {
               {testimonials.map((t, index) => (
                 <div 
                   key={t.name}
-                  className={`max-w-xl transition-all duration-300 ${
+                  className={`testimonial-item max-w-xl transition-all duration-300 ${
                     index % 2 === 1 ? "lg:mr-16" : "lg:ml-0"
                   }`}
                 >
