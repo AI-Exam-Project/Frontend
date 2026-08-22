@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import OtpInput from "@/app/verify-otp/components/OtpInput";
 
-const OTP_LENGTH = 5;
+const OTP_LENGTH = 6;
 const RESEND_SECONDS = 59;
 
 function VerifyOtpForm() {
